@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DeepSeek AI Chat Interface - Advanced Chatbot Assistance</title>
+
+  <!-- Fira Code Font for Code Snippets -->
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+
+  <!-- Highlight.js CSS for Syntax Highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css" rel="stylesheet">
+
+  <!-- Font Awesome for Icons (Integrity Attribute Removed) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    /* Base styles */
+    :root {
+      --deepseek-primary: #4D6BFE;
+      --deepseek-secondary: #2D3748;
+      --deepseek-background: #F7FAFC;
+      --deepseek-text: #1A202C;
+      --deepseek-border: #E2E8F0;
+      --deepseek-hover: rgba(77, 107, 254, 0.1);
+      --send-hover: #333333; /* Slightly lighter black for better visibility */
+    }
+
+
+    #deepseek-chat-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      height: 90vh;
+      background: var(--deepseek-background);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Logo and Welcome Screen */
+    .logo-container {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      padding: 16px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(77,107,254,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .logo-container:hover {
+      transform: scale(1.05);
+    }
+
+    .deepseek-logo {
+      width: 100%;
+      height: 100%;
+    }
+
+    #welcome-screen {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, rgba(77,107,254,0.05) 0%, rgba(77,107,254,0) 100%);
+      transition: all 0.3s ease;
+    }
+
+    #welcome-screen h1 {
+      color: var(--deepseek-text);
+      font-size: 28px;
+      margin: 0 0 12px;
+      font-weight: 600;
+    }
+
+    #welcome-screen p {
+      color: var(--deepseek-secondary);
+      font-size: 16px;
+      margin: 0 0 20px;
+      opacity: 0.8;
+    }
+
+    #start-chat-button {
+      padding: 12px 24px;
+      background: var(--deepseek-primary);
+      color: white;
+      border: none;
+      border-radius: 24px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    #start-chat-button:hover {
+      background: #3D5BFE;
+    }
+
+    /* Chat Interface */
+    #chat-interface {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      display: none; /* Hidden by default */
+    }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      scroll-behavior: smooth;
+      background: #f0f2f5;
+    }
+
+    /* Message Styles */
+    .message {
+      display: flex;
+      align-items: flex-start;
+      margin: 16px 0;
+      position: relative;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.ai {
+      justify-content: flex-start;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      margin: 0 12px;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 16px;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      font-size: 15px;
+      line-height: 1.6;
+      position: relative;
+      word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+      background: var(--deepseek-primary);
+      color: white;
+    }
+
+    /* Thinking Message */
+    .message-content.thinking {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(45,55,72,0.05);
+      color: var(--deepseek-secondary);
+    }
+
+    .thinking-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .thinking-dots span {
+      width: 8px;
+      height: 8px;
+      background: var(--deepseek-primary);
+      border-radius: 50%;
+      animation: thinking 1.4s infinite;
+    }
+
+    .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes thinking {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Input Area */
+    #input-container {
+      margin: 20px;
+      border-top: 1px solid var(--deepseek-border);
+      padding-top: 20px;
+      background: #ffffff;
+    }
+
+    #input-wrapper {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 24px;
+      padding: 12px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      border: 1px solid var(--deepseek-border);
+      transition: border-color 0.2s ease;
+      position: relative;
+    }
+
+    #input-wrapper:focus-within {
+      border-color: var(--deepseek-primary);
+    }
+
+    #user-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      resize: none;
+      padding: 8px;
+      font-size: 15px;
+      max-height: 150px;
+      outline: none;
+      line-height: 1.5;
+      min-height: 24px;
+      font-family: inherit;
+    }
+
+    #input-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 8px;
+    }
+
+    /* Buttons */
+    .action-btn, .send-btn, .upload-btn, .web-search-btn {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--deepseek-primary);
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover, .web-search-btn:hover {
+      background: var(--deepseek-hover);
+    }
+
+    .upload-btn:hover {
+      background: var(--deepseek-hover);
+    }
+
+    .send-btn:hover {
+      background: var(--send-hover);
+      color: white;
+    }
+
+    #deep-think {
+      width: auto;
+      background: var(--deepseek-primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      gap: 6px;
+      opacity: 0.7;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.2s ease;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    #deep-think.active {
+      opacity: 1;
+      background: #3D5BFE;
+      box-shadow: 0 2px 8px rgba(61, 91, 254, 0.3);
+    }
+
+    #deep-think:hover {
+      transform: translateY(-1px);
+      opacity: 1;
+    }
+
+    #web-search {
+      background: var(--deepseek-secondary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      gap: 6px;
+      opacity: 0.7;
+      display: flex;
+      align-items: center;
+      transition: opacity 0.2s ease;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    #web-search.active {
+      opacity: 1;
+      background: #FF5722;
+      box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+    }
+
+    #web-search:hover {
+      transform: translateY(-1px);
+      opacity: 1;
+    }
+
+    .clear-btn {
+      margin-top: 12px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      background: var(--deepseek-border);
+      color: var(--deepseek-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-right: 8px;
+    }
+
+    .clear-btn:hover {
+      background: #D1D9E6;
+    }
+
+    /* Code Blocks */
+    .message-content pre {
+      background: #1E1E1E;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 12px 0;
+      position: relative;
+      overflow-x: auto;
+      white-space: pre-wrap; /* Allows wrapping of long lines */
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message-content pre code {
+      color: #E1E1E1;
+      display: block;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0;
+    }
+
+    .message-content pre:hover .copy-button {
+      opacity: 1;
+    }
+
+    .copy-button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .copy-button.copied {
+      background: #4CAF50;
+    }
+
+    /* Image Handling */
+    .uploaded-image {
+      max-width: 300px;
+      max-height: 300px;
+      border-radius: 8px;
+      margin-top: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      display: block; /* Ensure image is block-level */
+    }
+
+    .uploaded-image:hover {
+      transform: scale(1.02);
+    }
+    
+    #scrollable-container {
+    max-height: 300px; /* Set the height of the container */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 15px;
+    font-size: 16px;
+    line-height: 1.6;
+    border: 1px solid #E2E8F0; /* Optional: Add border for visual separation */
+    border-radius: 8px; /* Optional: Rounded corners */
+    background: #F7FAFC; /* Optional: Background color */
+  }
+
+
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      #deepseek-chat-container {
+        height: 100vh;
+        border-radius: 0;
+      }
+
+      .message-content {
+        max-width: 85%;
+      }
+
+      .avatar {
+        width: 30px;
+        height: 30px;
+        margin: 0 8px;
+      }
+
+      .logo-container {
+        width: 60px;
+        height: 60px;
+      }
+
+      #welcome-screen h1 {
+        font-size: 24px;
+      }
+
+      .uploaded-image {
+        max-width: 250px;
+      }
+    
+      #deep-think span, #web-search span {
+        display: none;
+      }
+      
+      #scrollable-container {
+        max-height: 500px; /* Set the height of the container */
+        overflow-y: auto; /* Enable vertical scrolling */
+        padding: 15px;
+        font-size: 16px;
+        line-height: 1.6;
+        border: 1px solid #E2E8F0; /* Optional: Add border for visual separation */
+        border-radius: 8px; /* Optional: Rounded corners */
+        background: #F7FAFC; /* Optional: Background color */
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="deepseek-chat-container">
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+      <div class="logo-container">
+        <!-- DeepSeek Logo SVG -->
+        <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path id="path" d="M27.501 8.46875C27.249 8.3457 27.1406 8.58008 26.9932 8.69922C26.9434 8.73828 26.9004 8.78906 26.8584 8.83398C26.4902 9.22852 26.0605 9.48633 25.5 9.45508C24.6787 9.41016 23.9785 9.66797 23.3594 10.2969C23.2275 9.52148 22.79 9.05859 22.125 8.76172C21.7764 8.60742 21.4238 8.45312 21.1807 8.11719C21.0098 7.87891 20.9639 7.61328 20.8779 7.35156C20.8242 7.19336 20.7695 7.03125 20.5879 7.00391C20.3906 6.97266 20.3135 7.13867 20.2363 7.27734C19.9258 7.84375 19.8066 8.46875 19.8174 9.10156C19.8447 10.5234 20.4453 11.6562 21.6367 12.4629C21.7725 12.5547 21.8076 12.6484 21.7646 12.7832C21.6836 13.0605 21.5869 13.3301 21.501 13.6074C21.4473 13.7852 21.3662 13.8242 21.1768 13.7461C20.5225 13.4727 19.957 13.0684 19.458 12.5781C18.6104 11.7578 17.8438 10.8516 16.8877 10.1426C16.6631 9.97656 16.4395 9.82227 16.207 9.67578C15.2314 8.72656 16.335 7.94727 16.5898 7.85547C16.8574 7.75977 16.6826 7.42773 15.8193 7.43164C14.957 7.43555 14.167 7.72461 13.1611 8.10938C13.0137 8.16797 12.8594 8.21094 12.7002 8.24414C11.7871 8.07227 10.8389 8.0332 9.84766 8.14453C7.98242 8.35352 6.49219 9.23633 5.39648 10.7441C4.08105 12.5547 3.77148 14.6133 4.15039 16.7617C4.54883 19.0234 5.70215 20.8984 7.47559 22.3633C9.31348 23.8809 11.4307 24.625 13.8457 24.4824C15.3125 24.3984 16.9463 24.2012 18.7881 22.6406C19.2529 22.8711 19.7402 22.9629 20.5498 23.0332C21.1729 23.0918 21.7725 23.002 22.2373 22.9062C22.9648 22.752 22.9141 22.0781 22.6514 21.9531C20.5186 20.959 20.9863 21.3633 20.5605 21.0371C21.6445 19.752 23.2783 18.418 23.917 14.0977C23.9668 13.7539 23.9238 13.5391 23.917 13.2598C23.9131 13.0918 23.9512 13.0254 24.1445 13.0059C24.6787 12.9453 25.1973 12.7988 25.6738 12.5352C27.0557 11.7793 27.6123 10.5391 27.7441 9.05078C27.7637 8.82422 27.7402 8.58789 27.501 8.46875ZM15.46 21.8613C13.3926 20.2344 12.3906 19.6992 11.9766 19.7227C11.5898 19.7441 11.6592 20.1875 11.7441 20.4766C11.833 20.7617 11.9492 20.959 12.1123 21.209C12.2246 21.375 12.3018 21.623 12 21.8066C11.334 22.2207 10.1768 21.668 10.1221 21.6406C8.77539 20.8477 7.64941 19.7988 6.85547 18.3652C6.08984 16.9844 5.64453 15.5039 5.57129 13.9238C5.55176 13.541 5.66406 13.4062 6.04297 13.3379C6.54199 13.2461 7.05762 13.2266 7.55664 13.2988C9.66602 13.6074 11.4619 14.5527 12.9668 16.0469C13.8262 16.9004 14.4766 17.918 15.1465 18.9121C15.8584 19.9688 16.625 20.9746 17.6006 21.7988C17.9443 22.0879 18.2197 22.3086 18.4824 22.4707C17.6895 22.5586 16.3652 22.5781 15.46 21.8613ZM16.4502 15.4805C16.4502 15.3105 16.5859 15.1758 16.7568 15.1758C16.7949 15.1758 16.8301 15.1836 16.8613 15.1953C16.9033 15.2109 16.9424 15.2344 16.9727 15.2695C17.0273 15.3223 17.0586 15.4004 17.0586 15.4805C17.0586 15.6504 16.9229 15.7852 16.7529 15.7852C16.582 15.7852 16.4502 15.6504 16.4502 15.4805ZM19.5273 17.0625C19.3301 17.1426 19.1328 17.2129 18.9434 17.2207C18.6494 17.2344 18.3281 17.1152 18.1533 16.9688C17.8828 16.7422 17.6895 16.6152 17.6074 16.2168C17.5732 16.0469 17.5928 15.7852 17.623 15.6348C17.6934 15.3105 17.6152 15.1035 17.3877 14.9141C17.2012 14.7598 16.9658 14.7188 16.7061 14.7188C16.6094 14.7188 16.5205 14.6758 16.4541 14.6406C16.3457 14.5859 16.2568 14.4512 16.3418 14.2852C16.3691 14.2324 16.501 14.1016 16.5322 14.0781C16.8838 13.877 17.29 13.9434 17.666 14.0938C18.0146 14.2363 18.2773 14.498 18.6562 14.8672C19.0439 15.3145 19.1133 15.4395 19.334 15.7734C19.5078 16.0371 19.667 16.3066 19.7754 16.6152C19.8408 16.8066 19.7559 16.9648 19.5273 17.0625Z" fill-rule="nonzero" fill="#4D6BFE"></path></svg>
+        </svg>
+      </div>
+      <h1>Hi, I'm DeepSeek</h1>
+      <p>How can I help you today?</p>
+      <button id="start-chat-button">Start Chatting</button>
+      <div id="scrollable-container">
+        <p>
+          <strong>DeepSeek-R1</strong> is a next-generation <strong>open-source AI model</strong>, designed to rival 
+          <strong>OpenAI’s cutting-edge models</strong> in performance and innovation. With <strong>DeepSeek-V3</strong>, users can experience 
+          <span style="background-color: yellow; font-weight: bold;">highly advanced natural language processing (NLP), text generation, reasoning, and problem-solving</span> at an unprecedented level. Whether you're a 
+          <strong>developer, researcher, content creator, or AI enthusiast</strong>, DeepSeek provides 
+          <span style="color: blue; font-weight: bold;">seamless access to state-of-the-art machine learning capabilities.</span>
+          <br><br>
+      
+          Available for <span style="background-color: lightgreen; font-weight: bold;">free</span> on the <strong>web, mobile app, and API</strong>, 
+          <strong>DeepSeek AI</strong> empowers businesses and individuals to harness 
+          <span style="background-color: lightgray; font-weight: bold;">AI-driven automation, intelligent chatbot development, code generation, and data analysis</span> effortlessly. Its 
+          <strong>open-source nature</strong> fosters <em>global innovation</em>, enabling AI researchers and developers to 
+          <span style="background-color: yellow; font-weight: bold;">fine-tune, experiment, and deploy custom AI models without restrictions.</span>
+          <br><br>
+      
+          <strong>DeepSeek-R1</strong> is built for <strong>scalability, efficiency, and accuracy</strong>, making it a 
+          <span style="color: red; font-weight: bold;">strong competitor in the AI space.</span> Whether you're building 
+          <span style="background-color: lightblue; font-weight: bold;">AI-powered applications, training AI assistants, or performing advanced data research</span>, 
+          DeepSeek ensures <strong>lightning-fast performance and reliable results.</strong>
+          <br><br>
+      
+          With its <strong>API-first approach</strong>, DeepSeek seamlessly integrates into various AI applications, including 
+          <span style="color: purple; font-weight: bold;">chatbots, virtual assistants, automated content creation, AI-generated art, and predictive analytics.</span> 
+          Developers can easily access its <strong>developer-friendly API</strong>, making AI implementation effortless.
+          <br><br>
+      
+          <strong>Start exploring DeepSeek today</strong> and 
+          <span style="background-color: orange; font-weight: bold;">unlock limitless AI possibilities.</span> Push the boundaries of 
+          <span style="color: green; font-weight: bold;">AI-powered creativity, automation, and research</span> with one of the 
+          <strong>most accessible and powerful AI models available today! 🚀</strong>
+          <a href="https://deepseekai.blog/" rel="follow">DeepSeek AI</a>
+        </p>
+      </div>
+    
+     </div>
+
+    <!-- Chat Interface -->
+    <div id="chat-interface">
+      <div id="chat-messages"></div>
+    
+      <div id="input-container">
+        <div id="input-wrapper">
+          <textarea id="user-input" placeholder="Message DeepSeek..." rows="1"></textarea>
+          <div id="input-buttons">
+            <!-- Web Search Button -->
+            <button id="web-search" class="web-search-btn" title="Enable Web Search">
+              <i class="fas fa-search"></i>
+              <span class="hidden">WebSearch</span>
+            </button>
+          
+            <!-- DeepThink Mode Button -->
+            <button id="deep-think" class="action-btn" title="Toggle DeepThink Mode">
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="currentColor"/>
+              </svg>
+              <span class="hidden">DeepThink</span>
+            </button>
+          
+            <!-- Image Upload Button -->
+            <label for="image-upload" class="upload-btn" title="Upload Image">
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z" fill="currentColor"/>
+              </svg>
+            </label>
+            <input type="file" id="image-upload" accept="image/*" hidden>
+          
+            <!-- Send Button -->
+            <button id="send-button" class="send-btn" title="Send Message">
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button id="clear-chat" class="clear-btn">Clear Chat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlight.js Script for Syntax Highlighting (Corrected CDN URL) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script>
+    hljs.highlightAll();
+  </script>
+
+  <script>
+    // Initialize DeepSeek Chat
+    const DeepSeekChat = {
+      config: {
+        apiKey: 'add your api key of deepseek', // Replace with your actual API key
+        apiEndpoint: 'add your api endpoint of deepseek',
+        temperature: 0.7,
+        webSearchEndpoint: 'https://api.duckduckgo.com/', // DuckDuckGo Instant Answer API
+      },
+
+      state: {
+        isThinking: false,
+        conversationHistory: [],
+        imageData: null,
+        isDeepThinkEnabled: false,
+        isWebSearchEnabled: false,
+        isProcessing: false, // To prevent multiple AI responses
+      },
+
+      elements: {},
+
+      avatars: {
+        user: 'https://dummyimage.com/40x40/000000/FFFFFF.png&text=U', // User avatar URL
+        ai: 'https://deepseekai.blog/wp-content/uploads/2025/01/deepseeklogo.png', // DeepSeek avatar URL
+      },
+
+      init() {
+        this.bindElements();
+        this.bindEvents();
+        this.loadConversation();
+        this.bindWelcomeButton();
+      },
+
+      bindElements() {
+        this.elements = {
+          container: document.getElementById('deepseek-chat-container'),
+          welcomeScreen: document.getElementById('welcome-screen'),
+          chatInterface: document.getElementById('chat-interface'),
+          chatMessages: document.getElementById('chat-messages'),
+          userInput: document.getElementById('user-input'),
+          sendButton: document.getElementById('send-button'),
+          deepThinkButton: document.getElementById('deep-think'),
+          webSearchButton: document.getElementById('web-search'),
+          clearButton: document.getElementById('clear-chat'),
+          imageUpload: document.getElementById('image-upload'),
+          startChatButton: document.getElementById('start-chat-button'),
+        };
+      },
+
+      bindEvents() {
+        this.elements.sendButton.addEventListener('click', () => this.sendMessage());
+        this.elements.userInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+          }
+        });
+
+        this.elements.deepThinkButton.addEventListener('click', () => {
+          this.toggleDeepThinkMode();
+        });
+
+        this.elements.webSearchButton.addEventListener('click', () => {
+          this.toggleWebSearchMode();
+        });
+
+        this.elements.clearButton.addEventListener('click', () => this.clearChat());
+        this.elements.imageUpload.addEventListener('change', (e) => this.handleImageUpload(e));
+        this.elements.userInput.addEventListener('input', () => this.autoResizeInput());
+      },
+
+      bindWelcomeButton() {
+        this.elements.startChatButton.addEventListener('click', () => {
+          this.showChatInterface();
+        });
+      },
+
+      showChatInterface() {
+        this.elements.chatInterface.style.display = 'flex';
+        this.elements.welcomeScreen.style.display = 'none';
+        // Scroll to bottom if there are existing messages
+        this.scrollToBottom();
+      },
+
+      toggleDeepThinkMode() {
+        this.state.isDeepThinkEnabled = !this.state.isDeepThinkEnabled;
+        this.elements.deepThinkButton.classList.toggle('active', this.state.isDeepThinkEnabled);
+      },
+
+      toggleWebSearchMode() {
+        this.state.isWebSearchEnabled = !this.state.isWebSearchEnabled;
+        this.elements.webSearchButton.classList.toggle('active', this.state.isWebSearchEnabled);
+      },
+
+      generateContext() {
+        // Limit context to last N messages to avoid exceeding token limits
+        const maxMessages = 10;
+        const recentMessages = this.state.conversationHistory.slice(-maxMessages);
+        return recentMessages.map(msg => `${msg.sender === 'user' ? 'User' : 'DeepSeek'}: ${msg.message}`).join('\n');
+      },
+
+      // Save conversation history to localStorage
+      saveConversation() {
+        try {
+          localStorage.setItem('deepseek_conversation', JSON.stringify(this.state.conversationHistory));
+        } catch (error) {
+          console.error('Error saving conversation:', error);
+        }
+      },
+
+      // Load conversation history from localStorage
+      loadConversation() {
+        try {
+          const savedConversation = localStorage.getItem('deepseek_conversation');
+          if (savedConversation) {
+            this.state.conversationHistory = JSON.parse(savedConversation);
+            this.state.conversationHistory.forEach(msg => {
+              const isUser = msg.sender === 'user';
+              const isImage = msg.imageData ? true : false;
+              const content = isImage ? `data:image/jpeg;base64,${msg.imageData}` : msg.message;
+              this.addMessageToChat(content, isUser, false, msg);
+            });
+            // Hide welcome screen if conversation exists
+            if (this.state.conversationHistory.length > 0) {
+              this.showChatInterface();
+            }
+          }
+        } catch (error) {
+          console.error('Error loading conversation:', error);
+        }
+      },
+
+      async sendMessage() {
+        // Prevent sending multiple messages at the same time
+        if (this.state.isProcessing) return;
+
+        const message = this.elements.userInput.value.trim();
+        const hasImage = this.state.imageData !== null;
+
+        // Prevent sending if image is uploaded but no text is provided
+        if (hasImage && !message) {
+          alert('Please add a text prompt along with the image.');
+          return;
+        }
+
+        if (!message && !hasImage) return;
+
+        this.state.isProcessing = true;
+
+        // Combine image and text into a single message for the user
+        let combinedMessage = '';
+        if (hasImage) {
+          combinedMessage += `<img src="data:image/jpeg;base64,${this.state.imageData}" alt="Uploaded image" class="uploaded-image">`;
+        }
+        if (message) {
+          combinedMessage += `${this.escapeHTML(message)}`;
+        }
+
+        if (combinedMessage) {
+          this.addMessageToChat(combinedMessage, true, false, { isImage: hasImage });
+          this.state.conversationHistory.push({ sender: 'user', message: message, imageData: hasImage ? this.state.imageData : null });
+        }
+
+        this.saveConversation();
+        this.elements.userInput.value = '';
+        this.autoResizeInput();
+
+        // Reset imageData after adding to chat
+        this.state.imageData = null;
+
+        // Add thinking message
+        const thinkingMsg = this.addMessageToChat('', false, true);
+        this.scrollToBottom();
+
+        try {
+          // Generate context from history
+          const context = this.generateContext();
+
+          let aiMessage = '';
+
+          if (this.state.isWebSearchEnabled) {
+            const searchTerms = await this.extractSearchTermsWithGemini(message);
+            if (searchTerms.length > 0) {
+              const searchResult = await this.performWebSearch(searchTerms);
+              aiMessage = await this.generateResponseWithGemini(searchResult, message);
+            } else {
+              aiMessage = `🔍 I couldn't extract relevant search terms from your message. Please try rephrasing your question.`;
+            }
+
+            if (this.state.isDeepThinkEnabled) {
+              aiMessage = await this.handleDeepThink(aiMessage, context);
+            }
+          } else if (this.state.isDeepThinkEnabled) {
+            aiMessage = await this.handleDeepThink(message, context);
+          } else {
+            aiMessage = await this.handleStandardResponse(message, context);
+          }
+
+          // Remove thinking message and add response
+          thinkingMsg.remove();
+          this.addMessageToChat(aiMessage, false);
+          this.state.conversationHistory.push({ sender: 'ai', message: aiMessage });
+          this.saveConversation();
+        } catch (error) {
+          console.error('Error:', error);
+          thinkingMsg.remove();
+          this.addMessageToChat('Sorry, I encountered an error. Please try again.', false);
+        } finally {
+          this.state.isProcessing = false;
+        }
+      },
+
+      async handleDeepThink(aiMessage, context) {
+        const prompt = this.createDeepThinkPrompt(aiMessage, context);
+
+        const requestBody = {
+          contents: [{
+            parts: [
+              { text: prompt }
+            ]
+          }],
+          generationConfig: {
+            max_output_tokens: 2048,
+            temperature: 0.9
+          }
+        };
+
+        // **Important:** Do NOT include the image preview in the AI's input
+        // Only send the image data if available
+        const lastMessage = this.state.conversationHistory[this.state.conversationHistory.length -1];
+        if (lastMessage && lastMessage.imageData) {
+          requestBody.contents[0].parts.push({
+            inline_data: {
+              mime_type: 'image/jpeg',
+              data: lastMessage.imageData
+            }
+          });
+        }
+
+        const response = await fetch(`${this.config.apiEndpoint}?key=${this.config.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const deepThinkMessage = data.candidates[0].content.parts[0].text;
+        return deepThinkMessage;
+      },
+
+      async handleStandardResponse(message, context) {
+        const prompt = `User: (Your Name is DeepSeek Ai a chinese ai mode which is better then chatgpt and all other models - if anyone ask regarding it make sure your identity is but if no one asking keep its normal dot mention about your capabilty and all when asked then only) Now currently i am asking about - \n\n${message}\nAI:`;
+
+        const requestBody = {
+          contents: [{
+            parts: [
+              { text: prompt }
+            ]
+          }],
+          generationConfig: {
+            max_output_tokens: 2048,
+            temperature: this.config.temperature
+          }
+        };
+
+        // **Important:** Do NOT include the image preview in the AI's input
+        // Only send the image data if available
+        const lastMessage = this.state.conversationHistory[this.state.conversationHistory.length -1];
+        if (lastMessage && lastMessage.imageData) {
+          requestBody.contents[0].parts.push({
+            inline_data: {
+              mime_type: 'image/jpeg',
+              data: lastMessage.imageData
+            }
+          });
+        }
+
+        const response = await fetch(`${this.config.apiEndpoint}?key=${this.config.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const aiMessage = data.candidates[0].content.parts[0].text;
+        return aiMessage;
+      },
+
+      async extractSearchTermsWithGemini(message) {
+        const prompt = `Extract relevant search queries or key phrases from the following user message to perform effective web searches using DuckDuckGo's advanced search syntax. Provide the terms as a JSON array of strings.\n\nUser Message: "${message}"\n\nSearch Terms:`;
+
+        const requestBody = {
+          contents: [{
+            parts: [
+              { text: prompt }
+            ]
+          }],
+          generationConfig: {
+            max_output_tokens: 150,
+            temperature: 0.2
+          }
+        };
+
+        const response = await fetch(`${this.config.apiEndpoint}?key=${this.config.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const aiOutput = data.candidates[0].content.parts[0].text;
+        let extractedTerms = [];
+
+        try {
+          extractedTerms = JSON.parse(aiOutput);
+          if (!Array.isArray(extractedTerms)) {
+            throw new Error('Extracted search terms are not in array format.');
+          }
+        } catch (error) {
+          console.error('Error parsing search terms:', error);
+          // Fallback to simple keyword and phrase extraction
+          extractedTerms = this.extractSearchTerms(message);
+        }
+
+        return extractedTerms;
+      },
+
+      extractSearchTerms(text) {
+        // Use regex to extract phrases (at least two words) and filter out stop words
+        const stopWords = ['the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'for', 'to', 'of', 'in', 'with', 'what', 'how', 'why'];
+        const regex = /\b(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\s|^)(\w+\s\w+)\b/g;
+        let matches = text.toLowerCase().match(regex);
+        if (matches) {
+          // Filter out stop words
+          matches = matches.map(phrase => {
+            return phrase.split(' ').filter(word => !stopWords.includes(word)).join(' ');
+          }).filter(phrase => phrase.split(' ').length > 1);
+        } else {
+          // Fallback to single word extraction if no phrases found
+          matches = text
+            .toLowerCase()
+            .split(' ')
+            .filter(word => !stopWords.includes(word) && word.length > 2);
+        }
+        return matches || [];
+      },
+
+      buildAdvancedSearchQuery(searchTerms) {
+        // Construct advanced DuckDuckGo search query using operators
+
+        // Example: Use exact phrase matching if the term is multiple words
+        const formattedTerms = searchTerms.map(term => {
+          if (term.includes(' ')) {
+            return `"${term}"`;
+          } else {
+            return term;
+          }
+        });
+
+        // Join terms with AND operator
+        const query = formattedTerms.join(' AND ');
+
+        return query;
+      },
+
+      async performWebSearch(searchTerms) {
+        // Perform web search using DuckDuckGo Instant Answer API
+        const query = this.buildAdvancedSearchQuery(searchTerms);
+        try {
+          const response = await fetch(`${this.config.webSearchEndpoint}?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          console.error('Web search error:', error);
+          return {};
+        }
+      },
+
+      async generateResponseWithGemini(searchResult, originalMessage) {
+        let searchData = '';
+
+        if (searchResult.AbstractText) {
+          searchData = `Search Query: ${searchResult.Heading || 'No Heading'}\nResult: ${searchResult.AbstractText}\nSource URL: ${searchResult.AbstractURL || 'Unknown'}`;
+        } else if (searchResult.RelatedTopics && searchResult.RelatedTopics.length > 0) {
+          // Handle cases where AbstractText is not available but RelatedTopics are
+          const relatedInfo = searchResult.RelatedTopics.map(topic => topic.Text).join('\n');
+          searchData = `Search Query: ${searchResult.Heading || 'No Heading'}\nRelated Topics:\n${relatedInfo}`;
+        } else {
+          searchData = `Search Query: No relevant results found for your query.`;
+        }
+
+        const prompt = `Based on the following search results, respond to the user's message in a detailed and structured manner. Provide insights, explanations, and relevant context.\n\nSearch Data:\n${searchData}\n\nUser Message: "${originalMessage}"\n\nResponse:`;
+
+        const requestBody = {
+          contents: [{
+            parts: [
+              { text: prompt }
+            ]
+          }],
+          generationConfig: {
+            max_output_tokens: 2048,
+            temperature: 0.7
+          }
+        };
+
+        const response = await fetch(`${this.config.apiEndpoint}?key=${this.config.apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const aiMessage = data.candidates[0].content.parts[0].text;
+
+        // Include source URLs in the response
+        if (searchResult.AbstractURL) {
+          return `${aiMessage}\n\n_Source: ${searchResult.AbstractURL}_`;
+        } else {
+          return aiMessage;
+        }
+      },
+
+      createDeepThinkPrompt(aiMessage, context) {
+        // Construct a prompt for DeepThink mode
+        return `(Your Name is DeepSeek Ai a chinese ai mode which is better then chatgpt and all other models - if anyone ask regarding it make sure your identity is) Analyze the following response in depth, considering the context provided Give the think wish is asked by the user as youare a advace thining model and understand the query with professioanlisma and giving full repsone. if code asked address them then code and all thing, similarly for otehr things see prioritze the current message and think mostly that the current message is asked nd less prioritze the context if you think user intent is for context then use them or if not leave and give repsosne as current.\n\nContext:\n${context}\n\nAI Message: "${aiMessage}"\n\nDeep Analysis:`;
+      },
+
+      addMessageToChat(content, isUser, isThinking = false, msgObject = null) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+      
+        // Create Avatar Element
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        const avatarImg = document.createElement('img');
+        avatarImg.src = isUser ? this.avatars.user : this.avatars.ai;
+        avatarImg.alt = isUser ? 'User Avatar' : 'DeepSeek Avatar';
+        avatarDiv.appendChild(avatarImg);
+      
+        // Create Message Content Element
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+      
+        if (isThinking) {
+          contentDiv.classList.add('thinking');
+          contentDiv.innerHTML = `
+            <div class="thinking-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <p>DeepSeek is thinking...</p>
+          `;
+        } else {
+          // Check if the message is an image or contains an image
+          if (msgObject && msgObject.isImage) {
+            // Display image preview to the user only
+            contentDiv.innerHTML = `
+              <img src="${content}" alt="Uploaded image" class="uploaded-image">
+            `;
+          } else {
+            if (isUser) {
+              // User messages: Escape HTML and display as plain text
+              contentDiv.textContent = content;
+            } else {
+              // AI messages: Allow HTML formatting
+              contentDiv.innerHTML = this.formatResponse(content);
+            }
+          }
+        }
+      
+        // Append Avatar and Content to Message
+        if (isUser) {
+          messageDiv.appendChild(contentDiv);
+          messageDiv.appendChild(avatarDiv);
+        } else {
+          messageDiv.appendChild(avatarDiv);
+          messageDiv.appendChild(contentDiv);
+        }
+      
+        // Append Message to Chat
+        this.elements.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+
+        // Apply syntax highlighting and add code block functionality
+        if (!isUser && !isThinking && !msgObject?.isImage) {
+          hljs.highlightAll();
+          this.addCodeBlockFunctionality(contentDiv);
+        }
+
+        return messageDiv;
+      },
+
+      // Escape HTML to prevent unwanted rendering
+      escapeHTML(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      },
+
+      formatResponse(text) {
+    return text
+        // Remove unnecessary stars and underscores
+        .replace(/[*_]{2,}/g, '') // Removes **, __, etc.
+        .replace(/[*_]/g, '')     // Removes single * or _
+
+        // Handle markdown code blocks with language specification
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => `
+            <pre>
+              <button class="copy-button">Copy</button>
+              <code class="${lang ? lang : 'plaintext'}">${this.escapeHTML(code.trim())}</code>
+            </pre>
+        `)
+
+        // Ensure ordered lists (1., 2., 3...) are wrapped inside a single <ol>
+        .replace(/(?:^|\n)(\d+)\. (.*?)(?=(\n\d+\. )|\n\n|$)/gs, (match, num, content) => {
+            return (num === "1" ? "<ol>" : "") + `<li>${content}</li>` + (/\n\n/.test(match) ? "</ol>" : "");
+        })
+
+        // Ensure bullet lists (- Item) are wrapped inside a single <ul>
+        .replace(/(?:^|\n)- (.*?)(?=(\n- )|\n\n|$)/gs, (match, content) => {
+            return (match.startsWith("\n-") ? "" : "<ul>") + `<li>${content}</li>` + (/\n\n/.test(match) ? "</ul>" : "");
+        })
+
+        // Convert blockquotes
+        .replace(/> (.*$)/gm, '<blockquote>$1</blockquote>')
+
+        // Convert paragraphs
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+
+        .trim();
+},
+
+      addCodeBlockFunctionality(contentDiv) {
+        contentDiv.querySelectorAll('.copy-button').forEach(button => {
+          button.addEventListener('click', async () => {
+            const codeElement = button.parentElement.querySelector('code');
+            const code = codeElement.textContent;
+            try {
+              await navigator.clipboard.writeText(code);
+              button.innerText = 'Copied!';
+              button.classList.add('copied');
+              setTimeout(() => {
+                button.innerText = 'Copy';
+                button.classList.remove('copied');
+              }, 2000);
+            } catch (err) {
+              console.error('Failed to copy text: ', err);
+              button.innerText = 'Error';
+            }
+          });
+        });
+      },
+
+      async handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please upload a valid image file.');
+          return;
+        }
+
+        try {
+          const base64Data = await this.fileToBase64(file);
+          this.state.imageData = base64Data.split(',')[1];
+        
+          // Display a preview in the chat for the user only
+          const imgHTML = base64Data; // Send only base64 data to AI, not the img tag
+          this.addMessageToChat(imgHTML, true, false, { isImage: true });
+
+          // Ensure chat interface is visible
+          if (this.elements.chatInterface.style.display === 'none') {
+            this.showChatInterface();
+          }
+        
+          // Optionally, scroll to the bottom to show the preview
+          this.scrollToBottom();
+        } catch (error) {
+          console.error('Error processing image:', error);
+          this.addMessageToChat('Sorry, I couldn\'t process the image. Please try again.', false);
+        }
+      },
+
+      fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      },
+
+      autoResizeInput() {
+        const input = this.elements.userInput;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 150) + 'px';
+      },
+
+      scrollToBottom() {
+        this.elements.chatMessages.scrollTo({
+          top: this.elements.chatMessages.scrollHeight,
+          behavior: 'smooth'
+        });
+      },
+
+      // Clear chat function
+      clearChat() {
+        if (confirm('Are you sure you want to clear the chat? This action cannot be undone.')) {
+          this.elements.chatMessages.innerHTML = '';
+          this.elements.welcomeScreen.style.display = 'block';
+          this.elements.chatInterface.style.display = 'none';
+          this.state.conversationHistory = [];
+          this.state.imageData = null;
+          this.state.isDeepThinkEnabled = false;
+          this.state.isWebSearchEnabled = false;
+          this.elements.deepThinkButton.classList.remove('active');
+          this.elements.webSearchButton.classList.remove('active');
+          localStorage.removeItem('deepseek_conversation');
+        }
+      }
+    };
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      DeepSeekChat.init();
+    });
+
+    
+  </script>
+</body>
+</html>
